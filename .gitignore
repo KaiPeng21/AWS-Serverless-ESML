@@ -1,0 +1,9 @@
+
+build
+dist
+documents
+.DS_Store
+.pytest_cache
+.vscode
+
+dummy

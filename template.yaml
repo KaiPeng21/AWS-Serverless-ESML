@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Elasticsearch and Machine Learning Example
+Parameters:
+  ENVIRONMENT:
+    Type: String
+
+Resources:
+
+  ESMLExecLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "lambda.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies: 
+        - 
+          PolicyName: "ESMLExecLambdaRole"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - 
+                Effect: "Allow"
+                Action: "es:*"
+                Resource: "*"
+              - 
+                Effect: "Allow"
+                Action: "s3:*"
+                Resource: "*"
+              - 
+                Effect: "Allow"
+                Action: "sqs:*"
+                Resource: "*"
+              - 
+                Effect: "Allow"
+                Action: "rekognition:*"
+                Resource: "*"
+              - 
+                Effect: "Allow"
+                Action: "comprehend:*"
+                Resource: "*"
+              - 
+                Effect: "Allow"
+                Action: "polly:*"
+                Resource: "*"
+      ManagedPolicyArns: 
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+
+  FileProcessSqsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-${AWS::AccountId}-fileprocess-queue"
+
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    DependsOn:
+      - FileProcessSqsQueue
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action:
+              - SQS:SendMessage
+            Resource: !GetAtt FileProcessSqsQueue.Arn
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:s3:*:*:${AWS::StackName}-${AWS::AccountId}-documentstore-${ENVIRONMENT}"
+      Queues:
+        - !Ref FileProcessSqsQueue
+
+  DocumentStoreS3:
+    Type: AWS::S3::Bucket
+    DependsOn: 
+      - FileProcessSqsQueue
+      - QueuePolicy
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-${AWS::AccountId}-documentstore-${ENVIRONMENT}"
+      NotificationConfiguration:
+        QueueConfigurations:
+        - Event: "s3:ObjectCreated:*"
+          Queue: !GetAtt FileProcessSqsQueue.Arn
+
+  ElasticsearchDomain: 
+      Type: "AWS::Elasticsearch::Domain"
+      Properties:
+        DomainName: !Sub "${AWS::StackName}-${AWS::AccountId}-${ENVIRONMENT}"
+        ElasticsearchClusterConfig: 
+          DedicatedMasterEnabled: false
+          InstanceCount: 1
+          InstanceType: t2.small.elasticsearch
+          ZoneAwarenessEnabled: 'false'
+        EBSOptions: 
+          EBSEnabled: true
+          Iops: 0
+          VolumeSize: 10
+          VolumeType: "gp2"
+        ElasticsearchVersion: "6.3"
+        SnapshotOptions: 
+          AutomatedSnapshotStartHour: "0"
+        AdvancedOptions:
+          rest.action.multi.allow_explicit_index: 'true'
+        AccessPolicies: 
+          Version: "2012-10-17"
+          Statement: 
+            - 
+              Effect: "Allow"
+              Principal: 
+                AWS: 
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+              Action: 
+              - "es:*"
+              Resource: '*'
+
+  ESIndexingLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ESIndexingLambda-${ENVIRONMENT}
+      Handler: lambda_es_indexing.lambda_handler
+      Runtime: python3.6 
+      CodeUri: dist
+      MemorySize: 2048 
+      Timeout: 20
+      Role: !GetAtt ESMLExecLambdaRole.Arn
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt FileProcessSqsQueue.Arn
+            BatchSize: 10
+      Environment:
+        Variables:
+          ES_DOMAIN: !Sub "${AWS::StackName}-${AWS::AccountId}-${ENVIRONMENT}"
+          ES_PORT: 80
+          ES_BATCH_SIZE: 5242800
+
+  LexHookLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub LexHookLambda-${ENVIRONMENT}
+      Handler: lambda_lex_hook.lambda_handler
+      Runtime: python3.6
+      CodeUri: dist
+      MemorySize: 2048
+      Timeout: 20
+      Role: !GetAtt ESMLExecLambdaRole.Arn
+      Environment:
+        Variables:
+          ES_DOMAIN: !Sub "${AWS::StackName}-${AWS::AccountId}-${ENVIRONMENT}"
+          ES_PORT: 80
+          ES_BATCH_SIZE: 5242800
+
+  

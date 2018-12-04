@@ -1,0 +1,28 @@
+{
+    "Records": [
+      {
+        "eventSource": "aws:s3",
+        "awsRegion": "us-east-1",
+        "eventName": "ObjectCreated:Put",
+        "userIdentity": {
+          "principalId": "EXAMPLE"
+        },
+        "requestParameters": {
+          "sourceIPAddress": "127.0.0.1"
+        },
+        "s3": {
+          "bucket": {
+            "name": "kai-website-bucket",
+            "ownerIdentity": {
+              "principalId": "EXAMPLE"
+            },
+            "arn": "arn:aws:s3:::example-bucket"
+          },
+          "object": {
+            "key": "test_docx.docx",
+            "size": 1024
+          }
+        }
+      }
+    ]
+  }
