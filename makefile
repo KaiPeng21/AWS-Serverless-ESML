@@ -12,6 +12,7 @@ clean:
 dist:
 	rm -rf dist
 	mkdir dist
+	pipenv lock --requirements > requirements.txt
 	pip3 install -r requirements.txt -t dist
 	rsync -ax --exclude src/test src/. dist
 
