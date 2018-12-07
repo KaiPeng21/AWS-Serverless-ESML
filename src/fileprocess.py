@@ -5,7 +5,7 @@ import logging
 import io
 import boto3
 import PyPDF2
-import docx
+#import docx
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -50,35 +50,35 @@ def get_pdf_text_from_binary_data(binary_data : io.BytesIO) -> str:
         logger.error(e)
         raise e
 
-def get_docx_text_from_path(filepath : str) -> str:
-    """Extract text in a docx file
+# def get_docx_text_from_path(filepath : str) -> str:
+#     """Extract text in a docx file
     
-    Arguments:
-        filepath {str} -- path to the docx file
+#     Arguments:
+#         filepath {str} -- path to the docx file
     
-    Returns:
-        str -- text in the docx file
-    """
-    doc = docx.Document(filepath)
-    text = [paragraph.text for paragraph in doc.paragraphs]
-    return "\n".join(text).strip()
+#     Returns:
+#         str -- text in the docx file
+#     """
+#     doc = docx.Document(filepath)
+#     text = [paragraph.text for paragraph in doc.paragraphs]
+#     return "\n".join(text).strip()
 
-def get_docx_text_from_binary_data(binary_data : io.BytesIO) -> str:
-    """Extract text in a docx file from binary data
+# def get_docx_text_from_binary_data(binary_data : io.BytesIO) -> str:
+#     """Extract text in a docx file from binary data
     
-    Arguments:
-        binary_data {io.BytesIO} -- docx content in bytes
+#     Arguments:
+#         binary_data {io.BytesIO} -- docx content in bytes
     
-    Returns:
-        str -- text in the docx file
-    """
-    try:
-        doc = docx.Document(binary_data)
-        text = [paragraph.text for paragraph in doc.paragraphs]
-        return "\n".join(text).strip()
-    except Exception as e:
-        logger.error(e)
-        raise e
+#     Returns:
+#         str -- text in the docx file
+#     """
+#     try:
+#         doc = docx.Document(binary_data)
+#         text = [paragraph.text for paragraph in doc.paragraphs]
+#         return "\n".join(text).strip()
+#     except Exception as e:
+#         logger.error(e)
+#         raise e
 
 def get_txt_text_from_path(filepath : str) -> str:
     """Extract text in a txt file
@@ -120,8 +120,8 @@ def get_file_text_from_path(filepath : str) -> str:
     extension = filepath.split('.')[-1]
     if extension == 'pdf':
         return get_pdf_text_from_path(filepath)
-    elif extension == 'docx':
-        return get_docx_text_from_path(filepath)
+    # elif extension == 'docx':
+    #     return get_docx_text_from_path(filepath)
     elif extension == 'txt':
         return get_txt_text_from_path(filepath)
 
@@ -137,8 +137,8 @@ def get_file_text_from_binary_data(extension : str, binary_data : io.BytesIO) ->
     """
     if extension == 'pdf':
         return get_pdf_text_from_binary_data(binary_data)
-    elif extension == 'docx':
-        return get_docx_text_from_binary_data(binary_data)
+    # elif extension == 'docx':
+    #     return get_docx_text_from_binary_data(binary_data)
     elif extension == 'txt':
         return get_txt_text_from_binary_data(binary_data)
 

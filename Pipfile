@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 requests = "*"
 elasticsearch = "*"
-python-docx = "*"
 "PyPDF2" = "*"
 "boto3" = "*"
 
