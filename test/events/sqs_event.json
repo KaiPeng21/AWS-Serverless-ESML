@@ -40,7 +40,7 @@
                         "arn": "arn:aws:s3:::example-bucket"
                      },
                      "object": {
-                        "key": "amazon.docx",
+                        "key": "test_txt.txt",
                         "size": 1024,
                         "eTag": "abcdefg",
                         "sequencer": "1234567"

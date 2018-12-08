@@ -41,8 +41,8 @@ def dispatcher(s3_tuple_list : list) -> dict:
             title=s3_tuple[1],
             extension=extension,
             s3_tuple=s3_tuple,
-            content=binary_data
-        ) for extension, s3_tuple, binary_data in zip(extension_list, textfile_s3_tuple_list, binary_data_list)]
+            content=text_data
+        ) for extension, s3_tuple, text_data in zip(extension_list, textfile_s3_tuple_list, text_list)]
         es_tx.put_document_bulk(pid_list=pid_list, document_list=doc_list)
 
     # TODO: Imagefile

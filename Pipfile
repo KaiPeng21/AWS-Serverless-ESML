@@ -5,9 +5,8 @@ name = "pypi"
 
 [packages]
 requests = "*"
-elasticsearch = "*"
 "PyPDF2" = "*"
-"boto3" = "*"
 
 [dev-packages]
+"boto3" = "*"
 pytest = "*"

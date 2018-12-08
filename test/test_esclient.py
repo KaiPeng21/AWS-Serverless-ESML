@@ -5,7 +5,7 @@ from esclient import TextfileDocument
 
 @pytest.fixture
 def textfile_document(request):
-    textfile_document = TextfileDocument(host="https://search-test-k4lwj4dbdk6y5c3uto7o6umrg4.us-east-1.es.amazonaws.com", port=443)
+    textfile_document = TextfileDocument()
     textfile_document.delete_index()
     textfile_document.put_index()
     textfile_document.put_mapping()

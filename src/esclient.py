@@ -289,5 +289,8 @@ class TextfileDocument(ESClientBase):
             "key_phrases" : key_phrases
         }
 
-    
+if __name__ == "__main__":
+    tx = TextfileDocument()
+    tx.put_index()
+    tx.put_mapping()
 
