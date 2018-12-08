@@ -76,6 +76,9 @@ def lambda_handler(event : dict, context : dict) -> dict:
 
     event = serialize_to_dict(event)
 
+    print(f"{event}")
+    print(type(event["Records"]))
+
     s3_tuple_list = list(map(lambda x : (x["body"]["Records"][0]["s3"]["bucket"]["name"], \
                                          x["body"]["Records"][0]["s3"]["object"]["key"], \
                                          x["body"]["Records"][0]["s3"]["object"]["size"]), \

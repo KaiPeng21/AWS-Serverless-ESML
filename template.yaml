@@ -91,6 +91,19 @@ Resources:
         - Event: "s3:ObjectCreated:*"
           Queue: !GetAtt FileProcessSqsQueue.Arn
 
+  DocumentStoreS3BucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref DocumentStoreS3
+      PolicyDocument: 
+        Statement: 
+          - 
+            Sid: DocumentStoreS3PolicyDoc
+            Effect: "Allow"
+            Action: "s3:GetObject"
+            Principal: "*"
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref DocumentStoreS3, "/*"]]
+
   ElasticsearchDomain: 
       Type: "AWS::Elasticsearch::Domain"
       Properties:
@@ -119,17 +132,7 @@ Resources:
                 AWS: "*"
               Action: "es:*"
               Resource: "*"
-        # AccessPolicies: 
-        #   Version: "2012-10-17"
-        #   Statement: 
-        #     - 
-        #       Effect: "Allow"
-        #       Principal: 
-        #         AWS: 
-        #         - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-        #       Action: 
-        #       - "es:*"
-        #       Resource: '*'
+          #TODO: Set authentication/ vpc
 
   ESIndexingLambda:
     Type: AWS::Serverless::Function
@@ -149,8 +152,8 @@ Resources:
             BatchSize: 10
       Environment:
         Variables:
-          ES_DOMAIN: !Sub "${AWS::StackName}-${AWS::AccountId}-${ENVIRONMENT}"
-          ES_PORT: 80
+          ES_HOST: !GetAtt ElasticsearchDomain.DomainEndpoint
+          ES_PORT: 443
           ES_BATCH_SIZE: 5242800
 
   LexHookLambda:

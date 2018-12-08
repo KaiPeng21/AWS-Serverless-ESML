@@ -12,6 +12,12 @@ class ESClientBase:
         self._doc_type = doc_type
         self._mapping = mapping
 
+        if self._es_endpoint[:4] != "http":
+            if self._port == 443:
+                self._es_endpoint = f"https://{self._es_endpoint}" 
+            else:
+                self._es_endpoint = f"http://{self._es_endpoint}"
+
     @property
     def index(self):
         return self._index
@@ -283,7 +289,7 @@ class TextfileDocument(ESClientBase):
             "title" : title,
             "extension" : extension,
             "filesize" : s3_tuple[2],
-            "s3_url" : f"http://s3-{self.aws_region}.amazonaws.com/{s3_tuple[0]}/{s3_tuple[1]}",
+            "s3_url" : f"https://s3.amazonaws.com/{s3_tuple[0]}/{s3_tuple[1]}",
             "content" : content,
             "entities" : entities,
             "key_phrases" : key_phrases
