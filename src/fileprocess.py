@@ -6,6 +6,8 @@ import io
 import boto3
 import PyPDF2
 #import docx
+# TODO: docx is not working in lambda function because of the lxml import problem
+# TODO: move this file to deprecated and replace it with Amazon Textract
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
