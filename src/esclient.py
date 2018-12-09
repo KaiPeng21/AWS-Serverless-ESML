@@ -221,7 +221,7 @@ class TextfileDocument(ESClientBase):
         
         self.aws_region = aws_region
 
-        index = "filesearch"
+        index = "textfilesearch"
         doc_type = "textfile"
         mapping = {
             "properties" : {
@@ -294,6 +294,169 @@ class TextfileDocument(ESClientBase):
             "entities" : entities,
             "key_phrases" : key_phrases
         }
+    
+    def search_and_highlight_document(self, keywords : list, num_of_docs : int = 3, num_of_highlights : int = 3, highlight_fragment_size : int = 100) -> dict:
+        """ Search document by keywords and returns searched highlights
+        
+        Arguments:
+            keywords {list} -- list of strings to be searched
+        
+        Keyword Arguments:
+            num_of_docs {int} -- max number of searched document (default: {3})
+            num_of_highlights {int} -- number of highlight fragments (default: {3})
+            highlight_fragment_size {int} -- chars display per highlight fragment (default: {100})
+        
+        Returns:
+            dict -- textfile document in the form of 
+            {
+                "..." : ...,
+                "hits": {
+                    "total": n,
+                    "max_scoxre": x.xxxxxxx,
+                    "hits": [
+                        {
+                            "_index" : "...",
+                            "_type" : "...",
+                            "_id" : "...",
+                            "_score" : x.xxxxxxx,
+                            "_source" : {...mapping...},
+                            "highlight" : { 
+                                "content" : [xxx , xxx , xxx]
+                            }
+                        },
+                    ]
+                }
+            }
+        """
+
+        res = self.search_document(body={
+            "from" : 0,
+            "size" : num_of_docs,
+            "query" : {
+                "multi_match" : {
+                    "query" : " ".join(keywords),
+                    "fields" : ["content", "title"]
+                }
+            },
+            "highlight" : {
+                "number_of_fragments" : num_of_highlights,
+                "fragment_size" : highlight_fragment_size,
+                "fields" : {
+                    "content" : {}
+                }
+            }
+        })
+        return res
+
+class ImagefileDocument(ESClientBase):
+
+    def __init__(self, host : str = "http://localhost", port : int = 9200, aws_region : str = "us-east-1"):
+        self.aws_region = aws_region
+
+        index = "imagefilesearch"
+        doc_type = "imagefile"
+        mapping = {
+            "properties" : {
+                "title" : {
+                    "type" : "text"
+                },
+                "extension" : {
+                    "type" : "keyword"
+                },
+                "s3_url" : {
+                    "type" : "text"
+                },
+                "filesize" : {
+                    "type" : "integer"
+                },
+                "tags" : {
+                    "type" : "keyword"
+                }
+            }
+        }
+        return super().__init__(host, port, index, doc_type, mapping)
+
+    def create_pid(self, s3_tuple : tuple) -> str:
+        """ Get primary id from s3 bucket and object name
+        
+        Arguments:
+            s3_tuple {tuple} -- tuple of (s3 bucket, object key, object size)
+        
+        Returns:
+            str -- primary id
+        """
+
+        return "-".join(s3_tuple[:2])
+
+    def create_doc_entry(self, extension : str, s3_tuple : tuple, image_labels : list, image_texts : list, celebrities : list) -> dict:
+        """ Create document entry
+        
+        Arguments:
+            extension {str} -- file extension
+            s3_tuple {tuple} -- tuple of (s3 bucket, object key, object size)
+            image_labels {list} -- list of image labels
+            image_texts {list} -- list of image texts
+            celebrities {list} -- list of celebrities in image
+        
+        Returns:
+            dict -- document entry
+        """
+        tags = image_labels
+        tags[0:0] = image_texts
+        tags[0:0] = celebrities
+
+        return {
+            "extension" : extension,
+            "filesize" : s3_tuple[2],
+            "s3_url" : f"https://s3.amazonaws.com/{s3_tuple[0]}/{s3_tuple[1]}",
+            "tags" : tags
+        }
+
+    def search_document_by_tags(self, extension : str, s3_tuple : tuple, tag_list : list, num_of_docs : int = 3) -> dict:
+        """ Search document by image tags (labels, text, celebrities)
+        
+        Arguments:
+            extension {str} -- file extension
+            s3_tuple {tuple} -- tuple of (s3 bucket, object key, object size)
+            tag_list {list} -- list of tags
+        
+        Returns:
+            dict -- imagefile document in the form of
+            {
+                "..." : ...,
+                "hits": {
+                    "total": n,
+                    "max_scoxre": x.xxxxxxx,
+                    "hits": [
+                        {
+                            "_index" : "...",
+                            "_type" : "...",
+                            "_id" : "...",
+                            "_score" : x.xxxxxxx,
+                            "_source" : {...mapping...}
+                        },
+                    ]
+                }
+            }
+        """
+
+        res = self.search_document(body={
+            "from" : 0,
+            "size" : num_of_docs,
+            "query" : {
+                "bool" : {
+                    "should" : [
+                        {
+                            "match": {
+                                "tags": tag
+                            }
+                        }
+                        for tag in tag_list
+                    ]
+                }
+            }
+        })
+        return res
 
 if __name__ == "__main__":
     tx = TextfileDocument()

@@ -6,4 +6,4 @@ documents
 .pytest_cache
 .vscode
 
-dummy
+private*.json

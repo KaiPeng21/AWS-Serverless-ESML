@@ -8,7 +8,7 @@
                       "s3SchemaVersion": "1.0",
                       "configurationId": "s3putevent",
                       "bucket": {
-                         "name": "kai-website-bucket",
+                         "name": "example-bucket",
                          "ownerIdentity": {
                             "principalId": "abcdefg"
                          },
@@ -33,7 +33,7 @@
                      "s3SchemaVersion": "1.0",
                      "configurationId": "s3putevent",
                      "bucket": {
-                        "name": "kai-website-bucket",
+                        "name": "example-bucket",
                         "ownerIdentity": {
                            "principalId": "abcdefg"
                         },
@@ -49,6 +49,31 @@
                }
             ]
          }
-      }       
+      },
+      {
+         "body": {
+            "Records": [
+               {
+                  "s3": {
+                     "s3SchemaVersion": "1.0",
+                     "configurationId": "s3putevent",
+                     "bucket": {
+                        "name": "example-bucket",
+                        "ownerIdentity": {
+                           "principalId": "abcdefg"
+                        },
+                        "arn": "arn:aws:s3:::example-bucket"
+                     },
+                     "object": {
+                        "key": "test_jpeg.jpg",
+                        "size": 1024,
+                        "eTag": "abcdefg",
+                        "sequencer": "1234567"
+                     }
+                  }
+               }
+            ]
+         }
+      }              
     ]
  }

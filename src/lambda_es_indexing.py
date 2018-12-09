@@ -1,9 +1,10 @@
 """
 A lambda function that detects S3 put event and index information into elasticsearch
 """
-from decoder import serialize_to_dict
+from decoder import deserialize_to_dict
 from fileprocess import get_binary_data_from_file_in_s3, get_file_text_from_binary_data
-from esclient import TextfileDocument
+from esclient import TextfileDocument, ImagefileDocument
+from client_rekognition import detect_labels, detect_text, recognize_celebrities
 
 from config import ES_HOST, ES_PORT, AWS_DEFAULT_REGION
 
@@ -11,6 +12,7 @@ supported_textfile_types = set(['pdf', 'txt'])
 supported_imagefile_types = set(['jpg', 'jpeg', 'png', 'bmp', 'gif'])
 
 es_tx = TextfileDocument(host=ES_HOST, port=ES_PORT, aws_region=AWS_DEFAULT_REGION)
+es_im = ImagefileDocument(host=ES_HOST, port=ES_PORT, aws_region=AWS_DEFAULT_REGION)
 
 def dispatcher(s3_tuple_list : list) -> dict:
     """ Dispatch the lambda handler
@@ -45,11 +47,26 @@ def dispatcher(s3_tuple_list : list) -> dict:
         ) for extension, s3_tuple, text_data in zip(extension_list, textfile_s3_tuple_list, text_list)]
         es_tx.put_document_bulk(pid_list=pid_list, document_list=doc_list)
 
-    # TODO: Imagefile
+    imagefile_s3_tuple_list = list(filter(lambda x: x[1].split('.')[-1] in supported_imagefile_types, s3_tuple_list))
+    num_of_imagefiles = len(imagefile_s3_tuple_list)
+
+    if num_of_imagefiles > 0:
+
+        extension_list = [s3_key.split('.')[-1] for s3_bucket, s3_key, s3_size in imagefile_s3_tuple_list]
+        es_im.put_index()
+        es_im.put_mapping()
+        pid_list = [es_im.create_pid(s3_tuple=s3_tuple) for s3_tuple in imagefile_s3_tuple_list]
+        doc_list = [es_im.create_doc_entry(
+            extension=extension,
+            s3_tuple=s3_tuple,
+            image_labels=detect_labels(s3_tuple),
+            image_texts=detect_text(s3_tuple),
+            celebrities=recognize_celebrities(s3_tuple)
+        ) for extension, s3_tuple in zip(extension_list, imagefile_s3_tuple_list)]
+        es_im.put_document_bulk(pid_list=pid_list, document_list=doc_list)
 
     # TODO: Handle Delete file requests
 
-    # TODO: Format HTTP Response
     return {}
 
 def lambda_handler(event : dict, context : dict) -> dict:
@@ -63,28 +80,15 @@ def lambda_handler(event : dict, context : dict) -> dict:
         dict -- dictionary of http response
     """
 
-    # s3_tuple_list = []
-    # for record in event["Records"]:
-    #     if isinstance(record, str):
-    #         record = json.loads(record)
-    #     body = record["body"]
-    #     bucket_name = body["Records"][0]["s3"]["bucket"]["name"]
-    #     object_key = body["Records"][0]["s3"]["object"]["key"]
-    #     object_size = body["Records"][0]["s3"]["object"]["size"]
+    event = deserialize_to_dict(event)
 
-    #     s3_tuple_list.append((bucket_name, object_key, object_size))
-
-    event = serialize_to_dict(event)
-
-    print(f"{event}")
-    print(type(event["Records"]))
+    print(f"testing - {event}")
 
     s3_tuple_list = list(map(lambda x : (x["body"]["Records"][0]["s3"]["bucket"]["name"], \
                                          x["body"]["Records"][0]["s3"]["object"]["key"], \
                                          x["body"]["Records"][0]["s3"]["object"]["size"]), \
                                          event["Records"]))
 
-    print(f"testing - {event}")
     return dispatcher(s3_tuple_list=s3_tuple_list)
 
 if __name__ == "__main__":

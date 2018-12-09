@@ -12,7 +12,7 @@
         },
         "s3": {
           "bucket": {
-            "name": "kai-website-bucket",
+            "name": "example-bucket",
             "ownerIdentity": {
               "principalId": "EXAMPLE"
             },

@@ -1,7 +1,7 @@
 import json
 
-def serialize_to_dict(obj : object) -> dict:
-    """ Serialize Object to Dictionary Recursively
+def deserialize_to_dict(obj : object) -> dict:
+    """ Deserialize Object to Dictionary Recursively
     
     Arguments:
         obj {object} --  string, list, or dictionary to be serialize
@@ -12,7 +12,7 @@ def serialize_to_dict(obj : object) -> dict:
     return to_dict(obj)
 
 def to_dict(obj : object) -> dict:
-    """ Serialize Object to Dictionary Recursively
+    """ Deserialize Object to Dictionary Recursively
     
     Arguments:
         obj {object} --  string, list, or dictionary to be serialize

@@ -12,6 +12,7 @@ def lambda_handler(event : dict, context : dict) -> dict:
         dict -- [description]
     """
 
+    print(f"lex-hook-event: {event}")
 
     response = { 
         "statusCode" : 200,
