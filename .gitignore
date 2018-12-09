@@ -6,4 +6,5 @@ documents
 .pytest_cache
 .vscode
 
+deprecated
 private*.json
