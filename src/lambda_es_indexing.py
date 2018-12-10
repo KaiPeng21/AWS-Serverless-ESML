@@ -7,6 +7,7 @@ from esclient import TextfileDocument, ImagefileDocument
 from client_rekognition import detect_labels, detect_text, recognize_celebrities
 
 from config import ES_HOST, ES_PORT, AWS_DEFAULT_REGION
+from http import HTTPStatus
 
 supported_textfile_types = set(['pdf', 'txt'])
 supported_imagefile_types = set(['jpg', 'jpeg', 'png', 'bmp', 'gif'])
@@ -31,6 +32,7 @@ def dispatcher(s3_tuple_list : list) -> dict:
     if num_of_textfiles > 0:
 
         # get file extensions, binary data, and text in file
+        # TODO: replace this with Amazon Textract
         extension_list = [s3_key.split('.')[-1] for s3_bucket, s3_key, s3_size in textfile_s3_tuple_list]
         binary_data_list = [get_binary_data_from_file_in_s3(bucket=s3_bucket, key=s3_key) for s3_bucket, s3_key, s3_size in textfile_s3_tuple_list]
         text_list = [get_file_text_from_binary_data(extension, binary_data) for extension, binary_data in zip(extension_list, binary_data_list)]
@@ -67,7 +69,10 @@ def dispatcher(s3_tuple_list : list) -> dict:
 
     # TODO: Handle Delete file requests
 
-    return {}
+    return { 
+        "statusCode" : HTTPStatus.OK,
+        "body" : "Putting documents into elasticsearch successfully."
+    }
 
 def lambda_handler(event : dict, context : dict) -> dict:
     """ Process files uploaded onto s3 bucket and index the content into elasticsearch given SQS events
@@ -89,7 +94,13 @@ def lambda_handler(event : dict, context : dict) -> dict:
                                          x["body"]["Records"][0]["s3"]["object"]["size"]), \
                                          event["Records"]))
 
-    return dispatcher(s3_tuple_list=s3_tuple_list)
+    try:
+        return dispatcher(s3_tuple_list=s3_tuple_list)
+    except:
+        return { 
+            "statusCode" : HTTPStatus.INTERNAL_SERVER_ERROR,
+            "body" : "Putting documents into elasticsearch FAILED."
+        }
 
 if __name__ == "__main__":
     
@@ -97,7 +108,7 @@ if __name__ == "__main__":
     import os
 
     testfiles_filepath = os.path.dirname(os.path.abspath(__file__))
-    with open(testfiles_filepath + "/sqs_event.json") as f:
+    with open(testfiles_filepath + "/private-sqs_event.json") as f:
         put_event = json.loads(f.read())
     
     lambda_handler(put_event,{})

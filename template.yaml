@@ -154,7 +154,7 @@ Resources:
         Variables:
           ES_HOST: !GetAtt ElasticsearchDomain.DomainEndpoint
           ES_PORT: 443
-          ES_BATCH_SIZE: 5242800
+
 
   LexHookLambda:
     Type: AWS::Serverless::Function
@@ -168,8 +168,7 @@ Resources:
       Role: !GetAtt ESMLExecLambdaRole.Arn
       Environment:
         Variables:
-          ES_DOMAIN: !Sub "${AWS::StackName}-${AWS::AccountId}-${ENVIRONMENT}"
-          ES_PORT: 80
-          ES_BATCH_SIZE: 5242800
+          ES_HOST: !GetAtt ElasticsearchDomain.DomainEndpoint
+          ES_PORT: 443
 
   

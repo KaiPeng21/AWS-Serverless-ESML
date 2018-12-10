@@ -329,6 +329,7 @@ class TextfileDocument(ESClientBase):
             }
         """
 
+        # TODO: Investigate from Kibana and change this search method.
         res = self.search_document(body={
             "from" : 0,
             "size" : num_of_docs,

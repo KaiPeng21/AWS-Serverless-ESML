@@ -1,5 +1,6 @@
 # TODO: replace fileprocess module with Amazon Textract once the service become available
 # Getting really excited about the new features in Reinvent 2018!!!
+# https://docs.aws.amazon.com/textract/latest/dg/detecting-document-text.html
 
 # import boto3
 # import io
