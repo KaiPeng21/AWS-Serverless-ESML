@@ -141,8 +141,8 @@ Resources:
       Handler: lambda_es_indexing.lambda_handler
       Runtime: python3.6 
       CodeUri: dist
-      MemorySize: 2048 
-      Timeout: 20
+      MemorySize: 128
+      Timeout: 300
       Role: !GetAtt ESMLExecLambdaRole.Arn
       Events:
         MySQSEvent:
@@ -163,7 +163,7 @@ Resources:
       Handler: lambda_lex_hook.lambda_handler
       Runtime: python3.6
       CodeUri: dist
-      MemorySize: 2048
+      MemorySize: 128
       Timeout: 20
       Role: !GetAtt ESMLExecLambdaRole.Arn
       Environment:

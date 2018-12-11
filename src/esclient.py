@@ -119,7 +119,7 @@ class ESClientBase:
         data_list = [
             "\n".join([
                 json.dumps({ "create" : {"_id" : pid, "_type" : self._doc_type, "_index" : self._index} }),
-                json.dumps({ "doc" : document })
+                json.dumps(document)
             ]) for pid, document in zip(pid_list, document_list)
         ]
         data = "\n".join(data_list) + "\n"
@@ -157,6 +157,7 @@ class ESClientBase:
         Returns:
             requests.Response -- post request http response
         """
+        # TODO: Need Unittest to Verify If Functionalities are achieved
 
         data_list = [
             json.dumps({ "delete" : {"_id" : pid, "_type" : self._doc_type, "_index" : self._index} })
@@ -239,19 +240,6 @@ class TextfileDocument(ESClientBase):
                 },
                 "content" : {
                     "type" : "text"
-                },
-                "entities" : {
-                    "properties" : {
-                        "type" : {
-                            "type" : "keyword"
-                        },
-                        "content" : {
-                            "type" : "keyword"
-                        }
-                    }
-                },
-                "keyphrases" : {
-                    "type" : "keyword"
                 }
             }
         }
@@ -269,7 +257,7 @@ class TextfileDocument(ESClientBase):
 
         return "-".join(s3_tuple[:2])
 
-    def create_doc_entry(self, title : str, extension : str, s3_tuple : tuple, content : str, entities : list = [], key_phrases : list = []) -> dict:
+    def create_doc_entry(self, title : str, extension : str, s3_tuple : tuple, content : str) -> dict:
         """ Create document entry
         
         Arguments:
@@ -277,10 +265,6 @@ class TextfileDocument(ESClientBase):
             extension {str} -- file extension
             s3_tuple {tuple} -- tuple of (s3 bucket, object key, object size)
             content {str} -- document body
-        
-        Keyword Arguments:
-            entities {list} -- list of entities in document (default: {[]})
-            key_phrases {list} -- list of key phrases in document (default: {[]})
         
         Returns:
             dict -- textfile document
@@ -290,9 +274,7 @@ class TextfileDocument(ESClientBase):
             "extension" : extension,
             "filesize" : s3_tuple[2],
             "s3_url" : f"https://s3.amazonaws.com/{s3_tuple[0]}/{s3_tuple[1]}",
-            "content" : content,
-            "entities" : entities,
-            "key_phrases" : key_phrases
+            "content" : content
         }
     
     def search_and_highlight_document(self, keywords : list, num_of_docs : int = 3, num_of_highlights : int = 3, highlight_fragment_size : int = 100) -> dict:
@@ -329,8 +311,7 @@ class TextfileDocument(ESClientBase):
             }
         """
 
-        # TODO: Investigate from Kibana and change this search method.
-        res = self.search_document(body={
+        body = {
             "from" : 0,
             "size" : num_of_docs,
             "query" : {
@@ -346,7 +327,10 @@ class TextfileDocument(ESClientBase):
                     "content" : {}
                 }
             }
-        })
+        }
+
+        print(f"search and highlight using body: {body}")
+        res = self.search_document(body=body)
         return res
 
 class ImagefileDocument(ESClientBase):
@@ -358,9 +342,6 @@ class ImagefileDocument(ESClientBase):
         doc_type = "imagefile"
         mapping = {
             "properties" : {
-                "title" : {
-                    "type" : "text"
-                },
                 "extension" : {
                     "type" : "keyword"
                 },
@@ -413,13 +394,14 @@ class ImagefileDocument(ESClientBase):
             "tags" : tags
         }
 
-    def search_document_by_tags(self, extension : str, s3_tuple : tuple, tag_list : list, num_of_docs : int = 3) -> dict:
+    def search_document_by_tags(self, tag_list : list, num_of_docs : int = 3) -> dict:
         """ Search document by image tags (labels, text, celebrities)
         
         Arguments:
-            extension {str} -- file extension
-            s3_tuple {tuple} -- tuple of (s3 bucket, object key, object size)
             tag_list {list} -- list of tags
+        
+        Keyword Arguments:
+            num_of_docs {int} -- max number of searched document (default: {3})
         
         Returns:
             dict -- imagefile document in the form of
@@ -463,4 +445,31 @@ if __name__ == "__main__":
     tx = TextfileDocument()
     tx.put_index()
     tx.put_mapping()
+    im = ImagefileDocument()
+    im.put_index()
+    im.put_mapping()
+    
+    pid_list = range(3)
+    document_list = [
+        tx.create_doc_entry(
+            title="test_pdf.pdf",
+            extension="pdf",
+            s3_tuple=("bucket", "test_pdf.pdf", 1024),
+            content="This is a dummy PDF"
+        ),
+        tx.create_doc_entry(
+            title="amazon.pdf",
+            extension="pdf",
+            s3_tuple=("bucket", "amazon.pdf", 2048),
+            content="Amazon.com, Inc. is located in Seattle, WA and was founded July 5th, 1994 by Jeff Bezos, allowing customers to buy everything from books to blenders. Seattle is north of Portland and south of Vancouver, BC. Other notable Seattle - based companies are Starbucks and Boeing."
+        ),
+        tx.create_doc_entry(
+            title="test_hello.pdf",
+            extension="pdf",
+            s3_tuple=("bucket", "test_hello.pdf", 100),
+            content="Hello world"
+        )
+    ]
+    tx.put_document_bulk([1, 2, 3], document_list)
+
 
