@@ -352,7 +352,7 @@ class ImagefileDocument(ESClientBase):
                     "type" : "integer"
                 },
                 "tags" : {
-                    "type" : "keyword"
+                    "type" : "text"
                 }
             }
         }

@@ -54,42 +54,45 @@ Resources:
       ManagedPolicyArns: 
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 
-  FileProcessSqsQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub "${AWS::StackName}-${AWS::AccountId}-fileprocess-queue"
+  # FileProcessSqsQueue:
+  #   Type: AWS::SQS::Queue
+  #   Properties:
+  #     QueueName: !Sub "${AWS::StackName}-${AWS::AccountId}-fileprocess-queue"
 
-  QueuePolicy:
-    Type: AWS::SQS::QueuePolicy
-    DependsOn:
-      - FileProcessSqsQueue
-    Properties:
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS: '*'
-            Action:
-              - SQS:SendMessage
-            Resource: !GetAtt FileProcessSqsQueue.Arn
-            Condition:
-              ArnLike:
-                aws:SourceArn: !Sub "arn:aws:s3:*:*:${AWS::StackName}-${AWS::AccountId}-documentstore-${ENVIRONMENT}"
-      Queues:
-        - !Ref FileProcessSqsQueue
+  # QueuePolicy:
+  #   Type: AWS::SQS::QueuePolicy
+  #   DependsOn:
+  #     - FileProcessSqsQueue
+  #   Properties:
+  #     PolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             AWS: '*'
+  #           Action:
+  #             - SQS:SendMessage
+  #           Resource: !GetAtt FileProcessSqsQueue.Arn
+  #           Condition:
+  #             ArnLike:
+  #               aws:SourceArn: !Sub "arn:aws:s3:*:*:${AWS::StackName}-${AWS::AccountId}-documentstore-${ENVIRONMENT}"
+  #     Queues:
+  #       - !Ref FileProcessSqsQueue
 
   DocumentStoreS3:
     Type: AWS::S3::Bucket
-    DependsOn: 
-      - FileProcessSqsQueue
-      - QueuePolicy
+    # DependsOn: 
+    #   - FileProcessSqsQueue
+    #   - QueuePolicy
     Properties:
       BucketName: !Sub "${AWS::StackName}-${AWS::AccountId}-documentstore-${ENVIRONMENT}"
       NotificationConfiguration:
-        QueueConfigurations:
-        - Event: "s3:ObjectCreated:*"
-          Queue: !GetAtt FileProcessSqsQueue.Arn
+        # QueueConfigurations:
+        # - Event: "s3:ObjectCreated:*"
+        #   Queue: !GetAtt FileProcessSqsQueue.Arn
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Function: !GetAtt ESIndexingLambda.Arn
 
   DocumentStoreS3BucketPolicy: 
     Type: AWS::S3::BucketPolicy
@@ -145,11 +148,16 @@ Resources:
       Timeout: 300
       Role: !GetAtt ESMLExecLambdaRole.Arn
       Events:
-        MySQSEvent:
-          Type: SQS
+        # MySQSEvent:
+        #   Type: SQS
+        #   Properties:
+        #     Queue: !GetAtt FileProcessSqsQueue.Arn
+        #     BatchSize: 10
+        MyS3PutEvent:
+          Type: S3
           Properties:
-            Queue: !GetAtt FileProcessSqsQueue.Arn
-            BatchSize: 10
+            Bucket: !Ref DocumentStoreS3
+            Events: "s3:ObjectCreated:*"
       Environment:
         Variables:
           ES_HOST: !GetAtt ElasticsearchDomain.DomainEndpoint

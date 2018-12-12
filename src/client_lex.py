@@ -41,15 +41,15 @@ class LexResponse:
             dict -- generic attachment dictionary
         """
         attachment = {}
-        if title:
+        if title is not None:
             attachment["title"] = title
-        if sub_title:
+        if sub_title is not None:
             attachment["subTitle"] = sub_title
-        if image_url:
+        if image_url is not None:
             attachment["imageUrl"] = image_url
-        if attachment_link_url:
+        if attachment_link_url is not None:
             attachment["attachmentLinkUrl"] = attachment_link_url
-        if buttons:
+        if buttons is not None:
             attachment["buttons"] = buttons
         return attachment
     

@@ -74,20 +74,10 @@ def dispatcher(s3_tuple_list : list) -> dict:
         "body" : "Putting documents into elasticsearch successfully."
     }
 
-def lambda_handler(event : dict, context : dict) -> dict:
-    """ Process files uploaded onto s3 bucket and index the content into elasticsearch given SQS events
-
-    Arguments:
-        event {dict} -- dictionary of lambda events
-        context {dict} -- dictionary of lambda context
-
-    Returns:
-        dict -- dictionary of http response
-    """
+# TODO: AWS Just changed the message sends in sqs queue, update this later
+def handle_sqs_trigger(event : dict):
 
     event = deserialize_to_dict(event)
-
-    print(f"testing - {event}")
 
     s3_tuple_list = list(map(lambda x : (x["body"]["Records"][0]["s3"]["bucket"]["name"], \
                                          x["body"]["Records"][0]["s3"]["object"]["key"], \
@@ -102,13 +92,58 @@ def lambda_handler(event : dict, context : dict) -> dict:
             "body" : "Putting documents into elasticsearch FAILED."
         }
 
+def handle_s3_trigger(event : dict):
+
+    s3_tuple_list = [(
+        record["s3"]["bucket"]["name"], 
+        record["s3"]["object"]["key"], 
+        record["s3"]["object"]["size"]) 
+        for record in event["Records"]]
+
+    try:
+        return dispatcher(s3_tuple_list=s3_tuple_list)
+    except:
+        return { 
+            "statusCode" : HTTPStatus.INTERNAL_SERVER_ERROR,
+            "body" : "Putting documents into elasticsearch FAILED."
+        }
+
+def lambda_handler(event : dict, context : dict) -> dict:
+    """ Process files uploaded onto s3 bucket and index the content into elasticsearch given SQS events
+
+    Arguments:
+        event {dict} -- dictionary of lambda events
+        context {dict} -- dictionary of lambda context
+
+    Returns:
+        dict -- dictionary of http response
+    """
+
+    print(f"testing - {event}")
+
+    if event["Records"][0]["eventSource"] == "aws:s3":
+        return handle_s3_trigger(event)
+    elif event["Records"][0]["eventSource"] == "aws:sqs":
+        return handle_sqs_trigger(event)
+
+    return { 
+        "statusCode" : HTTPStatus.INTERNAL_SERVER_ERROR,
+        "body" : "Putting documents into elasticsearch FAILED."
+    }
+
 if __name__ == "__main__":
     
     import json
     import os
 
+    # testfiles_filepath = os.path.dirname(os.path.abspath(__file__))
+    # with open(testfiles_filepath + "/private_sqs_event.json") as f:
+    #     put_event = json.loads(f.read())
+    
+    # lambda_handler(put_event,{})
+
     testfiles_filepath = os.path.dirname(os.path.abspath(__file__))
-    with open(testfiles_filepath + "/private-sqs_event.json") as f:
+    with open(testfiles_filepath + "/private-s3_event.json") as f:
         put_event = json.loads(f.read())
     
     lambda_handler(put_event,{})

@@ -109,7 +109,10 @@ def get_imagefile_search_message(description : str) -> list:
     """
     print(f"Starting imagefilesearch using description {description}")
 
-    keywords = detect_keyphrases(description)
+    keywords = description.split()
+    if len(keywords) > 10:
+        keywords = detect_keyphrases(description)
+    print(f"Getting keywords {keywords}")
     es_im = ImagefileDocument(host=ES_HOST, port=ES_PORT, aws_region=AWS_DEFAULT_REGION)
     response = es_im.search_document_by_tags(
         tag_list=keywords,
@@ -184,7 +187,7 @@ def make_response(event : dict):
     else:
         attachments = [
             lex_resp.create_generic_attachment(
-                title="Labels",
+                title="Here is an image with labels:",
                 sub_title=", ".join(tag_list[:12])[:75] + "...",
                 attachment_link_url=s3_url,
                 image_url=s3_url
