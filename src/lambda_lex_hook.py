@@ -1,9 +1,9 @@
-from client_lex import LexResponse
+from client_lex import LexResponse, to_validate_text
 from client_comprehend import detect_keyphrases
 from esclient import TextfileDocument, ImagefileDocument
 
 from config import ES_HOST, ES_PORT, AWS_DEFAULT_REGION
-from difflib import SequenceMatcher
+
 import json
 
 def validate_slots(slots : dict) -> dict:
@@ -19,43 +19,6 @@ def validate_slots(slots : dict) -> dict:
     slots["ESMLFileTypes"] = to_validate_text(slots.get("ESMLFileTypes"), ["text", "image"])
 
     return slots
-
-def to_validate_text(a : str, textlist : list) -> str:
-    """ Convert text to validate format
-
-    Arguments:
-        a {str} -- text to validate
-        textlist {list} -- list of valid text
-
-    Returns:
-        str -- valid text
-    """
-
-    if a is None:
-        return None
-    for text in textlist:
-        if is_similar(a, text):
-            return text
-    return None
-
-def is_similar(a : str, b : str, threshold : float = 0.5) -> bool:
-    """ Check if two strings are similar enough
-    
-    Arguments:
-        a {str} -- first string
-        b {str} -- second string
-        threshold {float} -- threshold score between 0 and 1
-    
-    Returns:
-        bool -- is similar enough or not
-    """
-    if a is None or b is None:
-        return False
-    a = a.lower()
-    b = b.lower()
-    if a in b or b in a:
-        return True
-    return SequenceMatcher(a=a, b=b).ratio() > threshold
 
 def get_textfile_search_message(description : str) -> list:
     """

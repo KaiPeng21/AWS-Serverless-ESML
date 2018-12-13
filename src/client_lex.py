@@ -1,6 +1,7 @@
 """ 
 A module that interfaces with Amazon Lex
 """
+from difflib import SequenceMatcher
 
 class LexResponse:
 
@@ -54,7 +55,7 @@ class LexResponse:
         return attachment
     
     def make_options(self, buttons : list) -> dict:
-        """ Create a list of bu
+        """ Create a list of buttons
         
         Arguments:
             buttons {list} -- list of button dictionaries
@@ -100,17 +101,82 @@ class LexResponse:
                 "genericAttachments" : generic_attachments
             }
         return response
-
-    # TODO: Finish this later when needed
-    # 
-    # def response_confirm_intent(self):
-    #     pass
     
-    # def response_delegate(self):
-    #     pass
+    def response_confirm_intent(self, message_content : str, content_type : str = "PlainText", generic_attachments : list = None) -> dict:
+        """ Informs Amazon Lex that the user is expected to give a yes or no answer to confirm or deny the current intent.
+        E.g. Are you sure you want a large pizza?
+        
+        Arguments:
+            message_content {str} -- Message to convey to the user
 
-    # def response_elicit_intent(self):
-    #     pass
+        Keyword Arguments:
+            content_type {str} -- PlainText or SSML or CustomPayload (default: {"PlainText"})
+            generic_attachments {list} -- Optional list of generic attachment dictionary (default: {None})
+        
+        Returns:
+            dict -- response to lex
+        """
+        assert content_type in self._support_content_types
+        response = {
+            "sessionAttributes" : self.session_attribute,
+            "dialogAction" : {
+                "type" : "ConfirmIntent",
+                "message" : {
+                    "contentType" : content_type,
+                    "content" : message_content
+                },
+                "intentName" : self.intent_name,
+                "slots" : self.slots
+            }
+        }
+        if generic_attachments:
+            response["dialogAction"]["responseCard"] = {
+                "version" : 1,
+                "contentType" : "application/vnd.amazonaws.card.generic",
+                "genericAttachments" : generic_attachments
+            }
+        return response
+    
+    def response_delegate(self, delegate_slots : dict) -> dict:
+        """ Directs Amazon Lex to choose the next course of action based on teh bot configuration.
+        The response must include any session attributes, and the slots field must include all of
+        the slots specified for the request intent. If the value of the field is unkown, you must 
+        set it to null. You will get a DependencyFailedException exception if your fulfillment 
+        function returns the Delegate dialog action without removing any slots.
+        
+        Arguments:
+            delegate_slots {dict} -- delegate slot
+
+        Returns:
+            dict -- lex response
+        """
+        return {
+            "sessionAttributes" : self.session_attribute,
+            "dialogAction" : {
+                "type" : "Delegate",
+                "slots" : delegate_slots
+            }
+        }
+
+    def response_elicit_intent(self, message_content : str, content_type : str = "PlainText", generic_attachments : list = None) -> dict:
+        assert content_type in self._support_content_types
+        response = {
+            "sessionAttributes" : self.session_attribute,
+            "dialogAction" : {
+                "type" : "ElicitIntent",
+                "message" : {
+                    "contentType" : content_type,
+                    "content" : message_content
+                }
+            }
+        }
+        if generic_attachments:
+            response["dialogAction"]["responseCard"] = {
+                "version" : 1,
+                "contentType" : "application/vnd.amazonaws.card.generic",
+                "genericAttachments" : generic_attachments
+            }
+        return response
     
     def response_elicit_slot(self, 
         slot_to_elicit : str,
@@ -154,3 +220,41 @@ class LexResponse:
                 "genericAttachments" : generic_attachments
             }
         return response
+
+
+def to_validate_text(a : str, textlist : list) -> str:
+    """ Convert text to validate format
+
+    Arguments:
+        a {str} -- text to validate
+        textlist {list} -- list of valid text
+
+    Returns:
+        str -- valid text
+    """
+
+    if a is None:
+        return None
+    for text in textlist:
+        if is_similar(a, text):
+            return text
+    return None
+
+def is_similar(a : str, b : str, threshold : float = 0.5) -> bool:
+    """ Check if two strings are similar enough
+    
+    Arguments:
+        a {str} -- first string
+        b {str} -- second string
+        threshold {float} -- threshold score between 0 and 1
+    
+    Returns:
+        bool -- are similar enough or not
+    """
+    if a is None or b is None:
+        return False
+    a = a.lower()
+    b = b.lower()
+    if a in b or b in a:
+        return True
+    return SequenceMatcher(a=a, b=b).ratio() > threshold
