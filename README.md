@@ -144,7 +144,7 @@ A [deploy.sh](deploy.sh) shell script is provided to help building the next stag
 
 CloudFormation does not yet have an Amazon Lex resource and property types. An Amazon Lex template json is provided in the [lex/](/lex) directory. 
 
-#####Add Lex Hook Lambda Arn to the template file:
+##### Add Lex Hook Lambda Arn to the template file:
 
 After your CloudFormation stack status turns to CREATE_COMPLETE or UPDATE_COMPLETE, go to your AWS lambda console and find the lex_hook function ARN. Add the lambda ARN to the specified section in the Amazon Lex template.
 
