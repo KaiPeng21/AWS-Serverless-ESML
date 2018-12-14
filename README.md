@@ -3,12 +3,12 @@
 - [Introduction](##Introduction)
 - [Preview Demo](#Preview%20Demo)
 - [Design Architecture](##Design%20Architecture)
-- [Install Prerequisites](#Install%20Prerequisites)
-- [Setup Development Environment](Setup%20Development%20Environment)
-- [Testing Application Locally](Testing%20Application%20Locally)
-- [Deploy your App onto AWS](Deploy%20your%20App%20onto%20AWS)
-- [App Testing Instructions](App%20Testing%20Instructions)
-- [Liscense](Liscense)
+- [Install Prerequisites](##Install%20Prerequisites)
+- [Setup Development Environment](##Setup%20Development%20Environment)
+- [Testing Application Locally](##Testing%20Application%20Locally)
+- [Deploy your App onto AWS](##Deploy%20your%20App%20onto%20AWS)
+- [App Testing Instructions](##App%20Testing%20Instructions)
+- [Liscense](##Liscense)
 
 ## Introduction
 
@@ -24,26 +24,26 @@ Business and Entrepreneurs currently struggle with navigating all of the resourc
 
 #### AWS Services and Resources Utilized
 
-######Compute
+###### Compute
 * **Lambda**: serverless compute
     * **ES File Ingest**: When a file is put onto the S3 bucket document store, it triggers the function, process the files using ML and AI services, and stores the file data in Elasticsearch.
     * **Lex Hook**: Interfaces with Amazon Lex. Retrieves information from Elasticsearch and have the bot sending a response over the lex response card.
     * **Customize**: (Future Plan) Additional customization lambda functions that interfaces the lex with external API and services.
 
-######Storage and Analytics
+###### Storage and Analytics
 * **S3**: Stores the document file objects.
 * **Elasticsearch**: Search enginge database.
 
-######Machine Learning
+###### Machine Learning
 * **Lex**: Natrual language processing service that interfaces the app backend with a messaging platform (Slack).
 * **Rekognition**: Detects image labels, text in images, and celebrity faces.
 * **Comprehend**: Detects the key phrases and entities in the context.
 * **Textract**: (Future Plan) New service introduced in Reinvent 2018 that extracts and processes text, form, and table data from PDF and image files.
 
-######Application Integrations
+###### Application Integrations
 * **SQS**: messaging queue to decouple and scale services
 
-######Management and Governance
+###### Management and Governance
 * **CloudFormation**: maintain and deploy the AWS infrastructure as code
 * **AWS SAM**: build the next stage CloudFormation template
 
