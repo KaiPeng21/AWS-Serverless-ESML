@@ -106,3 +106,41 @@ def detect_keyphrases_batch(text_list : list) -> list:
         LanguageCode=default_language
     )
     return list(map(lambda x: list(map(lambda y: y["Text"], x["KeyPhrases"])), response["ResultList"]))
+
+def detect_sentiment(text : str) -> str:
+    """ Detect sentiment in text
+    
+    Arguments:
+        text {str} -- text to be detected
+    
+    Returns:
+        str -- one of 'POSITIVE'|'NEGATIVE'|'NEUTRAL'|'MIXED'
+    """
+
+    response = comprehend.detect_sentiment(
+        Text=text,
+        LanguageCode=default_language
+    )
+    return response["Sentiment"]
+
+def detect_sentiment_batch(text_list : list) -> list:
+    """[summary]
+    
+    Arguments:
+        text_list {list} -- [description]
+    
+    Returns:
+        list -- list of sentiment in the form
+        [
+            "POSITIVE",
+            "NEUTRAL",
+            "POSITIVE",
+            "NEGATIVE",
+            ...
+        ]
+    """
+    response = comprehend.batch_detect_sentiment(
+        TextList=text_list,
+        LanguageCode=default_language
+    )
+    return [result["Sentiment"] for result in response["ResultList"]]
