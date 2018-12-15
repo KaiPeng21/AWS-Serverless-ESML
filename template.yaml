@@ -179,4 +179,15 @@ Resources:
           ES_HOST: !GetAtt ElasticsearchDomain.DomainEndpoint
           ES_PORT: 443
 
+  LexExampleLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub LexExampleLambda-${ENVIRONMENT}
+      Handler: lambda_lex_example.lambda_handler
+      Runtime: python3.6
+      CodeUri: dist
+      MemorySize: 128
+      Timeout: 20
+      Role: !GetAtt ESMLExecLambdaRole.Arn
+
   
